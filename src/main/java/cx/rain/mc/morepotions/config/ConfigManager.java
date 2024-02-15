@@ -70,6 +70,10 @@ public class ConfigManager {
         return config.getBoolean("features.mundaneRandomEffect", true);
     }
 
+    public boolean getDragonBreathByEgg() {
+        return config.getBoolean("features.getDragonBreathByEgg", true);
+    }
+
     public boolean allowCustomBrewingRecipe() {
         return config.getBoolean("features.customBrewingRecipe", true);
     }

@@ -9,6 +9,7 @@ import cx.rain.mc.morepotions.compat.CompatManager;
 import cx.rain.mc.morepotions.config.ConfigManager;
 import cx.rain.mc.morepotions.brewing.BrewingManager;
 import cx.rain.mc.morepotions.listener.BrewingRecipeListener;
+import cx.rain.mc.morepotions.listener.ClickDragonEggListener;
 import cx.rain.mc.morepotions.listener.DrinkPotionListener;
 import cx.rain.mc.morepotions.api.data.EffectEntry;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -58,6 +59,7 @@ public class MorePotions extends JavaPlugin {
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new DrinkPotionListener(), this);
         getServer().getPluginManager().registerEvents(new BrewingRecipeListener(), this);
+        getServer().getPluginManager().registerEvents(new ClickDragonEggListener(this), this);
 
         var pluginCommand = getCommand("morepotions");
         if (pluginCommand != null) {

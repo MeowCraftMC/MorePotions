@@ -3,3 +3,4 @@ features:
   customBrewingRecipe: true
   anvilMixPotion: true
   brewingCompat: true
+  getDragonBreathByEgg: true
