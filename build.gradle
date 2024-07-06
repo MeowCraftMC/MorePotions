@@ -5,11 +5,11 @@ plugins {
 }
 
 group = 'cx.rain.mc.morepotions'
-version = '1.0.0'
+version = '1.0.1'
 archivesBaseName = 'more-potions'
 
-sourceCompatibility = JavaVersion.toVersion(17)
-targetCompatibility = JavaVersion.toVersion(17)
+sourceCompatibility = JavaVersion.toVersion(21)
+targetCompatibility = JavaVersion.toVersion(21)
 
 allprojects {
     apply plugin: 'java'
@@ -31,11 +31,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
-
-        if (project.name != "Compat") {
-            compileOnly project(':Compat')
-        }
+        compileOnly 'org.spigotmc:spigot-api:1.20.6-R0.1-SNAPSHOT'
     }
 }
 
@@ -57,7 +53,8 @@ shadowJar {
 dependencies {
     implementation project(':Compat')
 
-    if ("true".equalsIgnoreCase(System.getenv("MORE_POTIONS_MCMMO"))) {
-        implementation project(':Compat:mcMMO')
+    var mcmmo = findProject(':Compat:mcMMO')
+    if (mcmmo != null) {
+        implementation mcmmo
     }
 }

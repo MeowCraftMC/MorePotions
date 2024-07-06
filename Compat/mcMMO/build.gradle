@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'cx.rain.mc.morepotions.compat.mcmmo'
+group = 'cx.rain.mc.morepotions'
 version = '1.0.0'
 
 repositories {
@@ -10,5 +10,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly group: 'com.gmail.nossr50.mcMMO', name: 'mcMMO', version: '2.1.226'
+    compileOnly group: 'com.gmail.nossr50.mcMMO', name: 'mcMMO', version: '2.+'
+
+    implementation project(':Compat')
 }

@@ -2,5 +2,5 @@ plugins {
     id 'java'
 }
 
-group = 'cx.rain.mc.morepotions.compat'
+group = 'cx.rain.mc.morepotions'
 version = '1.0.0'

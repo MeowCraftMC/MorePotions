@@ -73,7 +73,7 @@ public class PotionItemStackHelper {
     private static ItemStack makePotion(ItemStack stack, PotionEntry potion) {
         var meta = stack.getItemMeta();
         if (meta instanceof PotionMeta potionMeta) {
-            potionMeta.setBasePotionType(org.bukkit.potion.PotionType.UNCRAFTABLE);
+            potionMeta.setBasePotionType(null);
 
             potionMeta.clearCustomEffects();
             for (var effect : PotionHelper.getEffects(potion)) {

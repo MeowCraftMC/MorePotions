@@ -2,7 +2,7 @@ rootProject.name = 'MorePotions'
 
 include ':Compat'
 
-if ("true".equalsIgnoreCase(System.getenv("MORE_POTIONS_MCMMO"))) {
+if (!'true'.equalsIgnoreCase(System.getenv('MORE_POTIONS_DISABLE_MCMMO'))) {
     include ':Compat:mcMMO'
     findProject(':Compat:mcMMO')?.name = 'mcMMO'
 }
