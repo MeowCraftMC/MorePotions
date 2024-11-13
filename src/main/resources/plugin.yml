@@ -1,7 +1,7 @@
 name: MorePotions
 version: '${version}'
 main: cx.rain.mc.morepotions.MorePotions
-api-version: 1.13
+api-version: 1.21
 prefix: MorePotions
 authors: [ qyl27 ]
 description: Configurable brewable potions
