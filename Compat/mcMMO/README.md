@@ -15,17 +15,3 @@ git clone https://github.com/mcMMO-Dev/mcMMO.git
 ```shell
 mvn install
 ```
-
-### Step 3. Build MorePotions with Compat mcMMO
-
-Windows:
-```shell
-set MORE_POTIONS_MCMMO=true
-gradlew build
-```
-
-Linux:
-```shell
-export MORE_POTIONS_MCMMO=true
-./gradlew build
-```

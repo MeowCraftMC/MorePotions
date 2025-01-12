@@ -1,13 +1,12 @@
 package cx.rain.mc.morepotions.compat.mcmmo;
 
 import cx.rain.mc.morepotions.api.compat.IMorePotionCompat;
-import cx.rain.mc.morepotions.api.event.MorePotionBrewEndEvent;
+import cx.rain.mc.morepotions.api.event.MorePotionBrewEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
 public class McMMOCompat implements IMorePotionCompat {
-    private Listener listener;
+    private McMMOCompatListener listener;
 
     @Override
     public boolean isFit(Plugin plugin) {
@@ -16,16 +15,13 @@ public class McMMOCompat implements IMorePotionCompat {
 
     @Override
     public void registerCompat(Plugin plugin) {
-        if (listener == null) {
-            listener = new McMMOCompatListener();
-        }
-
+        listener = new McMMOCompatListener();
         Bukkit.getPluginManager().registerEvents(listener, plugin);
     }
 
     @Override
     public void unregisterCompat(Plugin plugin) {
-        MorePotionBrewEndEvent.getHandlerList().unregister(listener);
+        MorePotionBrewEvent.getHandlerList().unregister(listener);
         listener = null;
     }
 }

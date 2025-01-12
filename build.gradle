@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'cx.rain.mc.morepotions'
-version = '1.0.2'
+version = '1.1.0'
 archivesBaseName = 'more-potions'
 
 sourceCompatibility = JavaVersion.toVersion(21)
@@ -17,8 +17,8 @@ allprojects {
     repositories {
         mavenCentral()
         maven {
-            name = 'spigotmc-repo'
-            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+            name = 'papermc-repo'
+            url = 'https://repo.papermc.io/repository/maven-public/'
         }
         maven {
             name = 'CodeMC NMS repo'
@@ -31,7 +31,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly 'org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT'
+        compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     }
 }
 
@@ -52,9 +52,5 @@ shadowJar {
 
 dependencies {
     implementation project(':Compat')
-
-    var mcmmo = findProject(':Compat:mcMMO')
-    if (mcmmo != null) {
-        implementation mcmmo
-    }
+    implementation project(':Compat:mcMMO')
 }

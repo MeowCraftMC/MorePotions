@@ -1,14 +1,20 @@
 package cx.rain.mc.morepotions.brewing;
 
+import cx.rain.mc.morepotions.MorePotions;
 import cx.rain.mc.morepotions.api.data.EffectEntry;
 import cx.rain.mc.morepotions.api.data.PotionCategory;
 import cx.rain.mc.morepotions.api.data.PotionEntry;
 import cx.rain.mc.morepotions.api.data.RecipeEntry;
 import cx.rain.mc.morepotions.utility.Pair;
-import cx.rain.mc.morepotions.utility.PotionItemStackHelper;
+import cx.rain.mc.morepotions.utility.PotionItemHelper;
+import cx.rain.mc.morepotions.utility.PotionItemPredicate;
+import io.papermc.paper.potion.PotionMix;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.BrewerInventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nonnull;
@@ -19,18 +25,18 @@ import java.util.List;
 import java.util.Map;
 
 public class BrewingManager {
-    private final Plugin plugin;
-
     private final Map<NamespacedKey, EffectEntry> effects = new HashMap<>();
     private final Map<NamespacedKey, PotionEntry> potions = new HashMap<>();
     private final Map<NamespacedKey, RecipeEntry> recipes = new HashMap<>();
+    private final List<PotionMix> potionMixes = new ArrayList<>();
 
-    public BrewingManager(Plugin plugin) {
-        this.plugin = plugin;
+    public BrewingManager() {
     }
 
     public void clear() {
+        recipes.keySet().forEach(Bukkit.getServer().getPotionBrewer()::removePotionMix);
         recipes.clear();
+        potionMixes.clear();
         potions.clear();
         effects.clear();
     }
@@ -45,64 +51,45 @@ public class BrewingManager {
 
     public void addRecipe(@Nonnull RecipeEntry entry) {
         recipes.put(entry.getId(), entry);
+        var potionMix = createPotionMix(entry);
+        potionMixes.add(potionMix);
+        Bukkit.getServer().getPotionBrewer().addPotionMix(potionMix);
     }
 
-    public @Nullable EffectEntry getEffect(@Nonnull NamespacedKey effectId) {
-        return effects.get(effectId);
+    private PotionMix createPotionMix(RecipeEntry entry) {
+        return new PotionMix(entry.getId(),
+                PotionItemHelper.getPotionStack(entry.getType(), entry.getResultId(), entry.getResultCategory()),
+                PotionMix.createPredicateChoice(new PotionItemPredicate(entry.getBaseCategory(), entry.getBasePotion())),
+                new RecipeChoice.MaterialChoice(entry.getIngredient()));
     }
 
     public @Nullable PotionEntry getPotion(@Nonnull NamespacedKey potionId) {
         return potions.get(potionId);
     }
 
-    public @Nullable RecipeEntry getRecipe(@Nonnull NamespacedKey recipeId) {
-        return recipes.get(recipeId);
-    }
-
-    private List<RecipeEntry> getRecipesByIngredient(Material ingredient) {
-        return recipes.values().stream()
-                .filter(r -> r.getIngredient().equals(ingredient))
-                .toList();
-    }
-
-    // Fixme: qyl27: According to vanilla, the recipes with same ingredient should all apply.
-    public @Nullable RecipeEntry getRecipe(BrewerInventory brewer) {
-        var ingredient = brewer.getIngredient();
-
-        if (ingredient == null) {
-            return null;
-        }
-        var candidateRecipes = getRecipesByIngredient(ingredient.getType());
-
-        if (candidateRecipes.isEmpty()) {
-            return null;
-        }
-
-        List<Pair<PotionCategory, NamespacedKey>> bases = new ArrayList<>();
-        for (var i = 0; i < 3; i++) {
-            var base = brewer.getItem(i);
-            var id = PotionItemStackHelper.getPotionId(base, PotionCategory.CUSTOM);
-            if (id != null) {
-                bases.add(new Pair<>(PotionCategory.CUSTOM, id));
-                continue;
-            }
-
-            id = PotionItemStackHelper.getPotionId(base, PotionCategory.VANILLA);
-            if (id != null) {
-                bases.add(new Pair<>(PotionCategory.VANILLA, id));
+    public RecipeEntry matchRecipe(ItemStack input, ItemStack ingredient, ItemStack result) {
+        for (var p : potionMixes) {
+            var r = p.getInput().test(input) && p.getIngredient().test(ingredient) && p.getResult().isSimilar(result);
+            if (r) {
+                return recipes.get(p.getKey());
             }
         }
-
-        if (bases.isEmpty()) {
-            return null;
-        }
-
-        for (var recipe : candidateRecipes) {
-            if (bases.contains(new Pair<>(recipe.getBaseCategory(), recipe.getBasePotion()))) {
-                return recipe;
-            }
-        }
-
         return null;
+    }
+
+    public List<EffectEntry> getPotionEffects(PotionEntry potion) {
+        var list = new ArrayList<EffectEntry>();
+
+        for (var id : potion.getEffects()) {
+            var effect = effects.get(id);
+
+            if (effect != null) {
+                list.add(effect);
+            } else {
+                throw new RuntimeException("Effect '" + id + "' used by '" + potion.getId() + "' was not registered!");
+            }
+        }
+
+        return list;
     }
 }

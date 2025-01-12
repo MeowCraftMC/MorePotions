@@ -11,6 +11,7 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 public class ConfigManager {
     private final Plugin plugin;
@@ -28,9 +29,9 @@ public class ConfigManager {
     private static final String EXAMPLE_CUSTOM_EFFECTS_NAME = "example_effects.yml";
     private static final String EXAMPLE_CUSTOM_EFFECTS_RESOURCE_PATH = "brewing/effects/example_effects.yml";
 
-    private File brewingRecipeDir;
-    private File potionsDir;
-    private File effectsDir;
+    private final File brewingRecipeDir;
+    private final File potionsDir;
+    private final File effectsDir;
 
     public ConfigManager(Plugin plugin) {
         this.plugin = plugin;
@@ -42,26 +43,11 @@ public class ConfigManager {
         plugin.saveDefaultConfig();
         config = plugin.getConfig();
 
+        brewingRecipeDir = new File(plugin.getDataFolder(), BREWING_RECIPES_DIR_NAME);
+        potionsDir = new File(brewingRecipeDir, CUSTOM_POTIONS_DIR_NAME);
+        effectsDir = new File(brewingRecipeDir, CUSTOM_EFFECTS_DIR_NAME);
+
         if (allowCustomBrewingRecipe()) {
-            brewingRecipeDir = new File(plugin.getDataFolder(), BREWING_RECIPES_DIR_NAME);
-            potionsDir = new File(brewingRecipeDir, CUSTOM_POTIONS_DIR_NAME);
-            effectsDir = new File(brewingRecipeDir, CUSTOM_EFFECTS_DIR_NAME);
-
-            if (!brewingRecipeDir.exists()) {
-                brewingRecipeDir.mkdirs();
-                saveDefaultConfig(new File(brewingRecipeDir, EXAMPLE_BREWING_RECIPES_NAME), EXAMPLE_BREWING_RECIPES_RESOURCE_PATH);
-            }
-
-            if (!potionsDir.exists()) {
-                potionsDir.mkdirs();
-                saveDefaultConfig(new File(potionsDir, EXAMPLE_CUSTOM_POTIONS_NAME), EXAMPLE_CUSTOM_POTIONS_RESOURCE_PATH);
-            }
-
-            if (!effectsDir.exists()) {
-                effectsDir.mkdirs();
-                saveDefaultConfig(new File(effectsDir, EXAMPLE_CUSTOM_EFFECTS_NAME), EXAMPLE_CUSTOM_EFFECTS_RESOURCE_PATH);
-            }
-
             loadBrewingRecipes();
         }
     }
@@ -100,24 +86,13 @@ public class ConfigManager {
      * Used for loading or reloading.
      */
     private void loadBrewingRecipes() {
-        if (!brewingRecipeDir.exists() || !brewingRecipeDir.isDirectory()) {
-            plugin.getLogger().warning("Recipes dir is not exists! Why?");
-            return;
-        }
-
-        if (!effectsDir.exists() || !effectsDir.isDirectory()) {
-            plugin.getLogger().warning("Effects dir is not exists! Why?");
-            return;
-        }
-
-        if (!potionsDir.exists() || !potionsDir.isDirectory()) {
-            plugin.getLogger().warning("Potions dir is not exists! Why?");
-            return;
-        }
+        ensureDirExists(brewingRecipeDir, () -> saveDefaultConfig(new File(brewingRecipeDir, EXAMPLE_BREWING_RECIPES_NAME), EXAMPLE_BREWING_RECIPES_RESOURCE_PATH));
+        ensureDirExists(potionsDir, () -> saveDefaultConfig(new File(potionsDir, EXAMPLE_CUSTOM_POTIONS_NAME), EXAMPLE_CUSTOM_POTIONS_RESOURCE_PATH));
+        ensureDirExists(effectsDir, () -> saveDefaultConfig(new File(effectsDir, EXAMPLE_CUSTOM_EFFECTS_NAME), EXAMPLE_CUSTOM_EFFECTS_RESOURCE_PATH));
 
         MorePotions.getInstance().getBrewingManager().clear();
 
-        for (var file : effectsDir.listFiles()) {
+        for (var file : Objects.requireNonNull(effectsDir.listFiles())) {
             if (!file.isDirectory()) {
                 var effects = load(file);
                 if (effects.getBoolean("enabled", true)) {
@@ -132,7 +107,7 @@ public class ConfigManager {
             }
         }
 
-        for (var file : potionsDir.listFiles()) {
+        for (var file : Objects.requireNonNull(potionsDir.listFiles())) {
             if (!file.isDirectory()) {
                 var potions = load(file);
                 if (potions.getBoolean("enabled", true)) {
@@ -146,7 +121,7 @@ public class ConfigManager {
             }
         }
 
-        for (var file : brewingRecipeDir.listFiles()) {
+        for (var file : Objects.requireNonNull(brewingRecipeDir.listFiles())) {
             if (!file.isDirectory()) {
                 var recipes = load(file);
                 if (recipes.getBoolean("enabled", true)) {
@@ -180,5 +155,16 @@ public class ConfigManager {
 
     private YamlConfiguration load(@Nonnull File file) {
         return YamlConfiguration.loadConfiguration(file);
+    }
+
+    private void ensureDirExists(File dir, Runnable initializer) {
+        if (!dir.isDirectory()) {
+            dir.delete();
+        }
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+            initializer.run();
+        }
     }
 }

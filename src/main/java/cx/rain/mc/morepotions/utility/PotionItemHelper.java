@@ -6,16 +6,18 @@ import cx.rain.mc.morepotions.api.data.PotionEntry;
 import cx.rain.mc.morepotions.api.data.PotionType;
 import cx.rain.mc.morepotions.brewing.persistence.CustomPotionData;
 import cx.rain.mc.morepotions.brewing.persistence.PotionContainerType;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
-public class PotionItemStackHelper {
+public class PotionItemHelper {
     public static @Nullable NamespacedKey getPotionId(@Nullable ItemStack potion, PotionCategory type) {
         if (potion == null) {
             return null;
@@ -33,8 +35,8 @@ public class PotionItemStackHelper {
 
         if (type == PotionCategory.VANILLA) {
             var meta = potion.getItemMeta();
-            if (meta instanceof PotionMeta potionMeta) {
-                return potionMeta.getBasePotionType().getKey();
+            if (meta instanceof PotionMeta potionMeta && potionMeta.hasBasePotionType()) {
+                return Objects.requireNonNull(potionMeta.getBasePotionType()).getKey();
             } else {
                 return null;
             }
@@ -50,33 +52,35 @@ public class PotionItemStackHelper {
         }
     }
 
+    @NotNull
     public static ItemStack getPotionStack(PotionType type, NamespacedKey potionId, PotionCategory category) {
-        var stack = getPotionBottle(type);
+        var stack = createPotionBottle(type);
 
         if (category == PotionCategory.VANILLA) {
             var potion = org.bukkit.potion.PotionType.valueOf(potionId.getKey());
-            return makePotion(stack, potion);
+            return createVanillaPotion(stack, potion);
         } else if (category == PotionCategory.CUSTOM) {
             var potion = MorePotions.getInstance().getBrewingManager().getPotion(potionId);
             if (potion == null) {
                 MorePotions.getInstance().getLogger().warning("Potion '" + potionId + "' was not found!");
-                return null;
+                return ItemStack.empty();
             }
 
-            return makePotion(stack, potion);
+            return createCustomPotion(stack, potion);
         } else {
             MorePotions.getInstance().getLogger().warning("Category '" + category + "' was not found!");
-            return null;
+            return ItemStack.empty();
         }
     }
 
-    private static ItemStack makePotion(ItemStack stack, PotionEntry potion) {
+    @NotNull
+    private static ItemStack createCustomPotion(ItemStack stack, PotionEntry potion) {
         var meta = stack.getItemMeta();
         if (meta instanceof PotionMeta potionMeta) {
             potionMeta.setBasePotionType(null);
 
             potionMeta.clearCustomEffects();
-            for (var effect : PotionHelper.getEffects(potion)) {
+            for (var effect : MorePotions.getInstance().getBrewingManager().getPotionEffects(potion)) {
                 potionMeta.addCustomEffect(new PotionEffect(effect.type(), effect.getDuration(), effect.getAmplifier(),
                         effect.byBeacon(), effect.showParticles(), effect.showIcon()), true);
             }
@@ -84,7 +88,7 @@ public class PotionItemStackHelper {
             potionMeta.setColor(potion.getColor());
 
             if (potion.hasShowName()) {
-                potionMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', potion.getShowName()));
+                potionMeta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize(Objects.requireNonNull(potion.getShowName())));
             }
 
             var dataContainer = potionMeta.getPersistentDataContainer();
@@ -98,7 +102,8 @@ public class PotionItemStackHelper {
         return stack;
     }
 
-    private static ItemStack makePotion(ItemStack stack, org.bukkit.potion.PotionType potion) {
+    @NotNull
+    private static ItemStack createVanillaPotion(ItemStack stack, org.bukkit.potion.PotionType potion) {
         var meta = stack.getItemMeta();
         if (meta instanceof PotionMeta potionMeta) {
             potionMeta.setBasePotionType(potion);
@@ -108,7 +113,7 @@ public class PotionItemStackHelper {
         return stack;
     }
 
-    private static ItemStack getPotionBottle(PotionType type) {
+    private static ItemStack createPotionBottle(PotionType type) {
         return switch (type) {
             case DRINK -> new ItemStack(Material.POTION);
             case SPLASH -> new ItemStack(Material.SPLASH_POTION);
